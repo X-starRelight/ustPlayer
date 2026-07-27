@@ -1,23 +1,23 @@
 # player_style_page.py — "播放器" 导航页
 """播放器样式配置：颜色选择、歌词位置、静默/结束显示。"""
 
-from typing import Optional
+from __future__ import annotations
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtGui import QColor
 
-from qfluentwidgets import (
+from qfluentwidgets import (  # pyright: ignore[reportMissingTypeStubs]
     LineEdit, ComboBox, ColorPickerButton,
     BodyLabel, StrongBodyLabel, HorizontalSeparator,
 )
 
-from core.settings_manager import SettingsManager
+from ..core.settings_manager import SettingsManager
 
 
 class PlayerStylePage(QWidget):
     """播放器样式标签页 — 6 个颜色选择 + 歌词位置 + 静默/结束显示。"""
 
-    def __init__(self, settings: SettingsManager, parent: Optional[QWidget] = None):
+    def __init__(self, settings: SettingsManager, parent: QWidget | None = None):
         super().__init__(parent)
         self._s = settings
         self._setup_ui()
@@ -25,7 +25,7 @@ class PlayerStylePage(QWidget):
 
     # ===================== UI 构建 =====================
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(10)
@@ -101,7 +101,7 @@ class PlayerStylePage(QWidget):
 
     def _add_combo_with_custom(
         self, parent: QVBoxLayout, label: str, attr: str,
-        options: list, init_value: str, custom_attr: str,
+        options: list[str], init_value: str, custom_attr: str,
     ):
         """下拉框 + 可选的自定义文字输入框。"""
         row = QHBoxLayout()
@@ -127,7 +127,7 @@ class PlayerStylePage(QWidget):
 
     # ===================== 信号绑定 =====================
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         s = self._s
 
         # 颜色：LineEdit ↔ ColorPickerButton ↔ Settings 三向同步
@@ -136,7 +136,7 @@ class PlayerStylePage(QWidget):
             _picker: ColorPickerButton = getattr(self, f"picker_{attr}")
 
             # 用默认参数捕获当前循环值，避免闭包延迟绑定
-            def bind_edit(a=attr, p=_picker):
+            def bind_edit(a: str = attr, p: ColorPickerButton = _picker):  # pyright: ignore[reportUnknownLambdaType]
                 def on_text(v: str):
                     setattr(self._s, a, v)
                     p.blockSignals(True)
@@ -144,7 +144,7 @@ class PlayerStylePage(QWidget):
                     p.blockSignals(False)
                 return on_text
 
-            def bind_picker(a=attr, ed=_edit):
+            def bind_picker(a: str = attr, ed: LineEdit = _edit):  # pyright: ignore[reportUnknownLambdaType]
                 def on_color(c: QColor):
                     h = c.name()
                     setattr(self._s, a, h)
@@ -157,7 +157,7 @@ class PlayerStylePage(QWidget):
             _picker.colorChanged.connect(bind_picker())
 
         # 歌词位置
-        self.lyric_pos_combo.currentTextChanged.connect(lambda v: setattr(s, "lyric_pos", v))
+        self.lyric_pos_combo.currentTextChanged.connect(lambda v: setattr(s, "lyric_pos", v))  # pyright: ignore[reportUnknownLambdaType]
         self.lyric_pos_combo.setCurrentText(s.lyric_pos)
 
         # 下拉框 + 自定义文字联动
@@ -168,17 +168,17 @@ class PlayerStylePage(QWidget):
         # 自定义文字初始化
         edit_pitch = getattr(self, "edit_pitch_custom")
         edit_pitch.setText(s.pitch_custom_text)
-        edit_pitch.textChanged.connect(lambda v: setattr(s, "pitch_custom_text", v))
+        edit_pitch.textChanged.connect(lambda v: setattr(s, "pitch_custom_text", v))  # pyright: ignore[reportUnknownLambdaType]
 
         edit_silent = getattr(self, "edit_silent_custom")
         edit_silent.setText(s.silent_custom_text)
-        edit_silent.textChanged.connect(lambda v: setattr(s, "silent_custom_text", v))
+        edit_silent.textChanged.connect(lambda v: setattr(s, "silent_custom_text", v))  # pyright: ignore[reportUnknownLambdaType]
 
         edit_end = getattr(self, "edit_end_custom")
         edit_end.setText(s.end_custom_text)
-        edit_end.textChanged.connect(lambda v: setattr(s, "end_custom_text", v))
+        edit_end.textChanged.connect(lambda v: setattr(s, "end_custom_text", v))  # pyright: ignore[reportUnknownLambdaType]
 
-    def _bind_combo_with_custom(self, attr: str, custom_attr: str):
+    def _bind_combo_with_custom(self, attr: str, custom_attr: str) -> None:
         """下拉框选择变更时，显示/隐藏自定义输入框并同步 settings。"""
         combo: ComboBox = getattr(self, f"combo_{attr}")
         custom_edit: LineEdit = getattr(self, f"edit_{custom_attr}")
@@ -192,7 +192,7 @@ class PlayerStylePage(QWidget):
 
     # ===================== 同步 =====================
 
-    def sync_all_from_settings(self):
+    def sync_all_from_settings(self) -> None:
         """导入 uplr 后同步 UI。"""
         s = self._s
         for attr in ["bg_color", "note_color", "lyric_color", "lyric_text_color", "other_text_color", "pitch_curve_color"]:

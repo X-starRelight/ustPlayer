@@ -4,18 +4,21 @@
 替代原 tkinter Canvas 版本，保留全部渲染逻辑。
 """
 
+from __future__ import annotations
+
 import re
 import time
 from datetime import timedelta
-from typing import List, Tuple, Optional
+from typing import Any
 
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import Qt, QTimer, QRectF, QPointF
 from PySide6.QtGui import (
-    QPainter, QColor, QFont, QFontMetrics, QPen, QPolygonF, QImage,
+    QPainter, QColor, QFont, QFontMetrics, QPen, QPolygonF,
+    QShowEvent, QResizeEvent, QPaintEvent, QKeyEvent, QCloseEvent,
 )
 
-from core.log import logger
+from .log import logger
 
 
 # ===================== 工具函数 =====================
@@ -27,7 +30,7 @@ def validate_hex_color(hex_color: str) -> str:
     return "#FFFFFF"
 
 
-def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
+def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
     """#RRGGBB → (R, G, B)。"""
     try:
         h = hex_color.lstrip('#')
@@ -53,7 +56,7 @@ class NoteLyricDisplay(QWidget):
 
     NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
-    def __init__(self, ust_info: dict):
+    def __init__(self, ust_info: dict[str, Any]):
         super().__init__()
         self._info = ust_info
 
@@ -131,7 +134,7 @@ class NoteLyricDisplay(QWidget):
         self.copyright_alpha = 100
 
         # ---- LRC 歌词 ----
-        self.lrc_lines: List[Tuple[float, str]] = []
+        self.lrc_lines: list[tuple[float, str]] = []
         self.current_lrc_idx = -1
         if self.show_lyric and self.lrc_path:
             self._parse_lrc()
@@ -152,7 +155,7 @@ class NoteLyricDisplay(QWidget):
         # ---- 当前渲染状态 ----
         self._current_lyric = ""
         self._current_note_name = ""
-        self._current_note: Optional[dict] = None
+        self._current_note: dict | None = None
         self._play_elapsed = 0.0
         self._last_pb_log_note_idx = -1
         self._note_idx_hint = 0  # 加速音符查找
@@ -168,15 +171,15 @@ class NoteLyricDisplay(QWidget):
 
         logger.debug("播放器 __init__ 完成")
 
-    def _init_fonts(self):
+    def _init_fonts(self) -> None:
         """初始化字体和度量缓存（屏幕尺寸变化后可重新调用）。"""
         note_fs = max(int(self.h * 2 / 3 * 0.4), 50)
         lyric_fs = max(int(self.h * 0.03), 10)
         ust_lyric_fs = max(int(self.h * 2 / 3 * 0.2), 80)
 
-        self.note_font = QFont("等线", note_fs, QFont.Bold)
+        self.note_font = QFont("等线", note_fs, QFont.Weight.Bold)
         self.lyric_font = QFont("等线", lyric_fs)
-        self.ust_lyric_font = QFont("等线", ust_lyric_fs, QFont.Bold)
+        self.ust_lyric_font = QFont("等线", ust_lyric_fs, QFont.Weight.Bold)
         self.small_font = QFont("等线", 14)
         self.copyright_font = QFont("等线", 12)
 
@@ -187,7 +190,7 @@ class NoteLyricDisplay(QWidget):
         self._fm_small = QFontMetrics(self.small_font)
         self._fm_copyright = QFontMetrics(self.copyright_font)
 
-    def showEvent(self, event):
+    def showEvent(self, event: QShowEvent):
         """窗口显示后启动定时器。"""
         super().showEvent(event)
         self._update_screen_size()
@@ -196,12 +199,12 @@ class NoteLyricDisplay(QWidget):
         self._timer.start(16)
         logger.debug("定时器已启动 (16ms)")
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent):
         """窗口大小变化时更新尺寸和字体。"""
         super().resizeEvent(event)
         self._update_screen_size()
 
-    def _update_screen_size(self):
+    def _update_screen_size(self) -> None:
         """用实际 widget 尺寸更新 w/h 并重建字体。"""
         new_w, new_h = self.width(), self.height()
         if new_w > 0 and new_h > 0 and (new_w != self.w or new_h != self.h):
@@ -210,7 +213,7 @@ class NoteLyricDisplay(QWidget):
 
     # ===================== 预计算音符 Tick 区间 =====================
 
-    def _calc_note_tick_ranges(self):
+    def _calc_note_tick_ranges(self) -> list[list[Any]]:
         ranges = []
         current_tick = 0
         for note in self.notes:
@@ -221,7 +224,7 @@ class NoteLyricDisplay(QWidget):
 
     # ===================== LRC 解析 =====================
 
-    def _parse_lrc(self):
+    def _parse_lrc(self) -> None:
         encodings = ['utf-8-sig', 'utf-8', 'gbk', 'gb2312', 'shift-jis']
         content = ""
         for enc in encodings:
@@ -251,7 +254,7 @@ class NoteLyricDisplay(QWidget):
 
     # ===================== 主循环 =====================
 
-    def _tick(self):
+    def _tick(self) -> None:
         """定时器回调：计算当前位置 → 更新绘制状态。"""
         try:
             self._play_elapsed = time.time() - self.start_real_time
@@ -306,7 +309,7 @@ class NoteLyricDisplay(QWidget):
         except Exception:
             logger.exception("_tick 异常")
 
-    def _process_note(self, note: dict):
+    def _process_note(self, note: dict[str, Any]):
         """根据音符数据更新当前显示的歌字和音名。"""
         raw_lyric = note.get("lyric", "")
         note_num = note.get("note_num", 0)
@@ -322,7 +325,7 @@ class NoteLyricDisplay(QWidget):
             self.last_valid_lyric = raw_lyric
             self._current_note_name = self._get_pitch_text(note_num)
 
-    def _update_lrc(self):
+    def _update_lrc(self) -> None:
         if not self.lrc_lines:
             return
         try:
@@ -338,9 +341,9 @@ class NoteLyricDisplay(QWidget):
 
     # ===================== 绘制（paintEvent） =====================
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         ww, wh = self.width(), self.height()
         painter.fillRect(0, 0, ww, wh, self._bg_color)
         cx, cy = ww // 2, wh // 2
@@ -358,7 +361,7 @@ class NoteLyricDisplay(QWidget):
             painter.drawText(
                 QRectF(cx - tw / 2 - pad, cy - th / 2 - pad,
                        tw + pad * 2, th + pad * 2),
-                Qt.AlignCenter, self._current_note_name,
+                Qt.AlignmentFlag.AlignCenter, self._current_note_name,
             )
 
         # ---- 音高线 ----
@@ -412,14 +415,14 @@ class NoteLyricDisplay(QWidget):
             painter.drawText(
                 QRectF(cx - tw / 2 - pad, cy - th / 2 - pad,
                        tw + pad * 2, th + pad * 2),
-                Qt.AlignCenter, self._current_lyric,
+                Qt.AlignmentFlag.AlignCenter, self._current_lyric,
             )
 
         # ---- 左上角静态信息 ----
         painter.setPen(QColor(self.small_font_color_hex))
         y_off = 20
         if self.show_song_name and self.song_name:
-            bf = QFont("等线", 14, QFont.Bold)
+            bf = QFont("等线", 14, QFont.Weight.Bold)
             painter.setFont(bf)
             painter.drawText(20, y_off + 14, self.song_name)
             painter.setFont(self.small_font)
@@ -514,11 +517,11 @@ class NoteLyricDisplay(QWidget):
 
     # ===================== 键盘/关闭事件 =====================
 
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Escape:
             self.close()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QCloseEvent):
         self._timer.stop()
         self._close_timer.stop()
         super().closeEvent(event)
@@ -526,7 +529,7 @@ class NoteLyricDisplay(QWidget):
 
 # ===================== 对外接口 =====================
 
-def display(ust_info: dict) -> NoteLyricDisplay:
+def display(ust_info: dict[str, Any]) -> NoteLyricDisplay:
     """启动播放器窗口，返回窗口引用（调用方需保持引用防止 GC）。
 
     关键：窗口标志必须在 show/showFullScreen 之前统一设置，
@@ -536,9 +539,9 @@ def display(ust_info: dict) -> NoteLyricDisplay:
     window = NoteLyricDisplay(ust_info)
 
     # ---- 在 show 之前统一设置所有窗口标志 ----
-    flags = window.windowFlags() | Qt.WindowStaysOnTopHint
+    flags = window.windowFlags() | Qt.WindowType.WindowStaysOnTopHint
     if window._fullscreen:
-        flags |= Qt.FramelessWindowHint
+        flags |= Qt.WindowType.FramelessWindowHint
     window.setWindowFlags(flags)
 
     if window._fullscreen:

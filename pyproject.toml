@@ -1,0 +1,17 @@
+[project]
+name = "ustplayer"
+version = "1.0.0-dev.1"
+description = "A multilingual visual tool for editing project files in a variety of voice synthesis systems."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "loguru>=0.7.0",
+    "pyside6>=6.5.0",
+    "pyside6-fluent-widgets[full]>=1.11.2",
+    "pytest>=9.1.1",
+    "pyyaml>=6.0.3",
+]
+
+[tool.pyright]
+reportMissingTypeStubs = false
+reportPrivateUsage = false

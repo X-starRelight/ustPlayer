@@ -1,28 +1,29 @@
 # other_page.py — "其他" 导航页
 """版权信息、外部工具、使用协议入口、主题与强调色设置。"""
 
+from __future__ import annotations
+
 import os
 import subprocess
 import webbrowser
-from typing import Optional
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 
-from qfluentwidgets import (
+from qfluentwidgets import (  # pyright: ignore[reportMissingTypeStubs]
     PushButton, BodyLabel, StrongBodyLabel, HorizontalSeparator,
     ComboBox, ColorPickerButton,
     InfoBar, InfoBarPosition,
 )
 
-from core.settings_manager import SettingsManager
+from ..core.settings_manager import SettingsManager
 
 
 class OtherPage(QWidget):
     """其他标签页 — 关于软件 / 工具 / 协议 / 主题与强调色。"""
 
-    def __init__(self, settings: SettingsManager, parent: Optional[QWidget] = None):
+    def __init__(self, settings: SettingsManager, parent: QWidget | None = None):
         super().__init__(parent)
         self._s = settings
         self._setup_ui()
@@ -30,7 +31,7 @@ class OtherPage(QWidget):
 
     # ===================== UI 构建 =====================
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(12)
@@ -40,7 +41,7 @@ class OtherPage(QWidget):
         # 版权信息（可点击）
         copyright_lbl = BodyLabel("ustPlayer - v26f19 (c) 2026 SYEternal_R & 灰棱HiRenG")
         copyright_lbl.setStyleSheet("color: #0066CC;")
-        copyright_lbl.setCursor(Qt.PointingHandCursor)
+        copyright_lbl.setCursor(Qt.CursorShape.PointingHandCursor)
         copyright_lbl.mousePressEvent = lambda e: self._open_url(
             "https://space.bilibili.com/661930756"
         )
@@ -129,7 +130,7 @@ class OtherPage(QWidget):
 
     # ===================== 信号绑定 =====================
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         s = self._s
 
         # 主题下拉框
@@ -171,7 +172,7 @@ class OtherPage(QWidget):
         """自定义颜色选择 → 更新 settings。"""
         setattr(self._s, "custom_accent_color", color.name())
 
-    def _update_accent_custom_visible(self, mode: str):
+    def _update_accent_custom_visible(self, mode: str) -> None:
         """自定义模式下显示颜色选择器。"""
         self.accent_color_picker.setVisible(mode == "custom")
 
@@ -214,14 +215,15 @@ class OtherPage(QWidget):
 
     # ===================== 工具方法 =====================
 
-    def _open_url(self, url: str):
+    def _open_url(self, url: str) -> None:
         try:
             webbrowser.open(url, new=2)
         except Exception as e:
-            InfoBar.error("ERcode003", f"打开网页失败：{e}", 5000,
-                          parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
+                "ERcode003", f"打开网页失败：{e}", 5000,
+                parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
 
-    def _open_ercode(self):
+    def _open_ercode(self) -> None:
         try:
             path = self._s.ercode_file_path
             subprocess.Popen(
@@ -233,10 +235,11 @@ class OtherPage(QWidget):
                 stdin=subprocess.PIPE,
             )
         except Exception as e:
-            InfoBar.error("ERcode008", f"打开ERcode.txt失败：{e}", 5000,
-                          parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
+                "ERcode008", f"打开ERcode.txt失败：{e}", 5000,
+                parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
 
-    def _open_terms(self):
+    def _open_terms(self) -> None:
         try:
             path = self._s.terms_file_path
             subprocess.Popen(
@@ -248,12 +251,13 @@ class OtherPage(QWidget):
                 stdin=subprocess.PIPE,
             )
         except Exception as e:
-            InfoBar.error("ERcode009", f"打开Terms.txt失败：{e}", 5000,
-                          parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
+                "ERcode009", f"打开Terms.txt失败：{e}", 5000,
+                parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
 
     # ===================== 同步 =====================
 
-    def _sync_ui_from_settings(self):
+    def _sync_ui_from_settings(self) -> None:
         """从 settings 同步所有 UI 控件。"""
         s = self._s
         self.theme_combo.setCurrentText(self._theme_combo_text(s.theme_mode))
@@ -263,6 +267,6 @@ class OtherPage(QWidget):
         self.accent_color_picker.setColor(QColor(s.custom_accent_color))
         self._update_accent_custom_visible(s.accent_color_mode)
 
-    def sync_all_from_settings(self):
+    def sync_all_from_settings(self) -> None:
         """导入 uplr 或导航切换后同步 UI。"""
         self._sync_ui_from_settings()

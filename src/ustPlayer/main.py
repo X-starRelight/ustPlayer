@@ -1,29 +1,32 @@
 # main.py — ustPlayer 主入口
 """PySide6 + PySide6-Fluent-Widgets 版本，提供侧边导航的现代化界面。"""
 
+from __future__ import annotations
+
 import os
 import sys
 import winreg
+from typing import Any
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon, QColor
 
-from qfluentwidgets import (
+from qfluentwidgets import (  # pyright: ignore[reportMissingTypeStubs]
     FluentWindow, NavigationItemPosition, FluentIcon,
     InfoBar, InfoBarPosition, MessageBox, setTheme, Theme, setThemeColor,
 )
 
-from core.log import logger
-from core.settings_manager import SettingsManager
-from core.ustplayer import display
-import core.ustreader as ur
+from .core.log import logger
+from .core.settings_manager import SettingsManager
+from .core.ustplayer import display
+from .core import ustreader as ur
 
-from ui.basic_page import BasicPage
-from ui.file_page import FilePage
-from ui.player_style_page import PlayerStylePage
-from ui.lyric_page import LyricPage
-from ui.other_page import OtherPage
+from .ui.basic_page import BasicPage
+from .ui.file_page import FilePage
+from .ui.player_style_page import PlayerStylePage
+from .ui.lyric_page import LyricPage
+from .ui.other_page import OtherPage
 
 
 class MainWindow(FluentWindow):
@@ -58,7 +61,7 @@ class MainWindow(FluentWindow):
 
         app = QApplication.instance()
         if app:
-            app.styleHints().colorSchemeChanged.connect(
+            app.styleHints().colorSchemeChanged.connect(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
                 self._on_system_theme_changed
             )
 
@@ -183,23 +186,23 @@ class MainWindow(FluentWindow):
         self.other_page.setObjectName("other_page")
 
     def _init_navigation(self):
-        self.addSubInterface(
+        self.addSubInterface(  # pyright: ignore[reportUnknownMemberType]
             self.basic_page, FluentIcon.HOME, "基础",
             position=NavigationItemPosition.TOP,
         )
-        self.addSubInterface(
+        self.addSubInterface(  # pyright: ignore[reportUnknownMemberType]
             self.file_page, FluentIcon.DOCUMENT, "文件",
             position=NavigationItemPosition.TOP,
         )
-        self.addSubInterface(
+        self.addSubInterface(  # pyright: ignore[reportUnknownMemberType]
             self.player_style_page, FluentIcon.PALETTE, "播放器",
             position=NavigationItemPosition.TOP,
         )
-        self.addSubInterface(
+        self.addSubInterface(  # pyright: ignore[reportUnknownMemberType]
             self.lyric_page, FluentIcon.MUSIC, "歌词",
             position=NavigationItemPosition.TOP,
         )
-        self.addSubInterface(
+        self.addSubInterface(  # pyright: ignore[reportUnknownMemberType]
             self.other_page, FluentIcon.INFO, "其他",
             position=NavigationItemPosition.BOTTOM,
         )
@@ -212,7 +215,7 @@ class MainWindow(FluentWindow):
 
         if not ustx_path or not os.path.exists(ustx_path):
             logger.warning(f"UST 文件无效: {ustx_path}")
-            InfoBar.error(
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
                 "ERcode001", "请选择有效的UST文件！",
                 5000, parent=self, position=InfoBarPosition.TOP_RIGHT,
             )
@@ -236,18 +239,18 @@ class MainWindow(FluentWindow):
 
         except UnicodeDecodeError:
             logger.exception("UST 编码错误")
-            InfoBar.error(
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
                 "ERcode004", "解析UST文件失败：使用了错误的编码，请切换编码后重试",
                 5000, parent=self, position=InfoBarPosition.TOP_RIGHT,
             )
         except Exception as e:
             logger.exception("播放准备失败")
-            InfoBar.error(
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
                 "ERcode999", f"播放准备失败：{e}",
                 5000, parent=self, position=InfoBarPosition.TOP_RIGHT,
             )
 
-    def _launch_player(self, ust_info: dict):
+    def _launch_player(self, ust_info: dict[str, Any]):
         """启动播放器并保持引用。"""
         sc = ust_info["show_config"]
         logger.info(
@@ -282,23 +285,23 @@ class MainWindow(FluentWindow):
                          self.lyric_page, self.other_page]:
                 page.sync_all_from_settings()
 
-            InfoBar.success(
+            InfoBar.success(  # pyright: ignore[reportUnknownMemberType]
                 "成功", f"已成功打开并加载工程：\n{dropped}",
                 3000, parent=self, position=InfoBarPosition.TOP_RIGHT,
             )
         except Exception as e:
-            InfoBar.error(
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
                 "ERcode006", f"加载工程文件失败：\n{e}",
                 5000, parent=self, position=InfoBarPosition.TOP_RIGHT,
             )
 
     # ===================== 导航切换时同步页面 =====================
 
-    def switchTo(self, interface):
+    def switchTo(self, interface: QWidget):  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
         """覆写父类方法，切换后同步页面数据。"""
         super().switchTo(interface)
         if hasattr(interface, "sync_all_from_settings"):
-            interface.sync_all_from_settings()
+            interface.sync_all_from_settings()  # pyright: ignore[reportAttributeAccessIssue]
 
 
 # ===================== 程序入口 =====================
@@ -329,5 +332,5 @@ def main():
     sys.exit(app.exec())
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

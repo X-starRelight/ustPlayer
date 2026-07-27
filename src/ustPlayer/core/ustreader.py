@@ -1,14 +1,34 @@
-# ustreader.py — UST 文件解析器（优化版）
+# ustreader.py — UST 文件解析器
 """UTAU Sequence Text (UST) 文件解析模块。
 
 提取 UST 文件中的版本、速度、轨道数和音符信息，
 供播放器和主窗口使用。
 """
 
-from typing import List, Dict, Union
+from __future__ import annotations
+
+from typing import Any, TypedDict
+import yaml
 
 
-def _parse_pitch_bend(value: str) -> List[int]:
+class UstNote(TypedDict, total=False):
+    """UST 音符数据结构。"""
+    index: str
+    length: int
+    lyric: str
+    note_num: int
+    pitch_bend: list[int]
+
+
+class UstInfo(TypedDict):
+    """UST 文件解析结果。"""
+    version: str
+    tempo: float
+    tracks: int
+    notes: list[UstNote]
+
+
+def _parse_pitch_bend(value: str) -> list[int]:
     """将 PitchBend 字符串解析为整数列表。
 
     Args:
@@ -17,7 +37,7 @@ def _parse_pitch_bend(value: str) -> List[int]:
     Returns:
         整数列表，解析失败的值被静默跳过
     """
-    result: List[int] = []
+    result: list[int] = []
     if not value.strip():
         return result
     for num_str in value.split(","):
@@ -28,7 +48,7 @@ def _parse_pitch_bend(value: str) -> List[int]:
     return result
 
 
-def get_ust_info(ust_path: str, encoding: str = "UTF-8") -> Dict[str, Union[str, float, int, List[Dict]]]:
+def get_ust_info(ust_path: str, encoding: str = "UTF-8") -> UstInfo:
     """解析 UST 文件，提取版本、速度、轨道数和音符列表。
 
     Args:
@@ -36,14 +56,14 @@ def get_ust_info(ust_path: str, encoding: str = "UTF-8") -> Dict[str, Union[str,
         encoding: 文件编码，默认 UTF-8。日文 UST 通常用 Shift-JIS
 
     Returns:
-        dict::
+        UstInfo::
             {
                 "version": str,      # UST 版本号，如 "UST Version 1.20"
                 "tempo": float,      # 速度 (BPM)，默认 120.0
                 "tracks": int,       # 轨道数，默认 1
-                "notes": list[dict]  # 音符列表，每项含:
-                                     #   index, length, lyric,
-                                     #   note_num, pitch_bend
+                "notes": list[UstNote]  # 音符列表，每项含:
+                                       #   index, length, lyric,
+                                       #   note_num, pitch_bend
             }
 
     Raises:
@@ -61,11 +81,11 @@ def get_ust_info(ust_path: str, encoding: str = "UTF-8") -> Dict[str, Union[str,
     ust_version = ""
     ust_tempo = 120.0
     ust_tracks = 1
-    note_list: List[Dict] = []
+    note_list: list[UstNote] = []
 
     # ===== 状态标记 =====
     in_setting = False
-    current_note: Dict = {}
+    current_note: UstNote = {}
 
     # ===== 从 [#VERSION] 段提取版本的标记 =====
     # 原逻辑：遇到 [#VERSION] 时 set continue，下一行非空非注释时取版本号
@@ -102,13 +122,13 @@ def get_ust_info(ust_path: str, encoding: str = "UTF-8") -> Dict[str, Union[str,
                 expect_version = False
                 if current_note:
                     note_list.append(current_note)
-                current_note = {
-                    "index": line[2:-1],
-                    "length": 0,
-                    "lyric": "",
-                    "note_num": 0,
-                    "pitch_bend": [],
-                }
+                current_note = UstNote(
+                    index=line[2:-1],
+                    length=0,
+                    lyric="",
+                    note_num=0,
+                    pitch_bend=[],
+                )
                 continue
 
             # ---- 版本号（[#VERSION] 后的第一行有效内容） ----
@@ -159,13 +179,52 @@ def get_ust_info(ust_path: str, encoding: str = "UTF-8") -> Dict[str, Union[str,
     if current_note:
         note_list.append(current_note)
 
-    return {
-        "version": ust_version,
-        "tempo": ust_tempo,
-        "tracks": ust_tracks,
-        "notes": note_list,
-    }
+    return UstInfo(
+        version=ust_version,
+        tempo=ust_tempo,
+        tracks=ust_tracks,
+        notes=note_list,
+    )
 
+def parse_ustx(file_path: str) -> UstInfo:
+    """
+    解析 OpenUtau 的 .ustx (YAML) 文件，提取所需信息。
+    """
+    with open(file_path, 'r', encoding='utf-8') as f:
+        data: dict[str, Any] = yaml.safe_load(f)
+
+    # 基本信息
+    version = data.get('ustx_version', '')
+    tempo = data.get('tempos', [{}])[0].get('bpm', 120.0)
+    tracks = len(data.get('tracks', []))
+
+    # 收集所有音符
+    all_notes: list[UstNote] = []
+    voice_parts = data.get('voice_parts', [])
+    # 按照 voice_parts 的顺序和每个 part 内 notes 的顺序添加
+    for part in voice_parts:
+        for note in part.get('notes', []):
+            # 提取 pitch 曲线中的 y 值
+            pitch_data = note.get('pitch', {}).get('data', [])
+            pitch_bend = [point.get('y', 0) for point in pitch_data]
+
+            # 构造音符对象
+            ust_note: UstNote = {
+                'index': str(len(all_notes)),          # 全局序号
+                'length': note.get('duration', 0),
+                'lyric': note.get('lyric', ''),
+                'note_num': note.get('tone', 60),
+                'pitch_bend': pitch_bend
+            }
+            all_notes.append(ust_note)
+
+    result: UstInfo = {
+        'version': version,
+        'tempo': tempo,
+        'tracks': tracks,
+        'notes': all_notes
+    }
+    return result
 
 # ===================== 独立测试 =====================
 if __name__ == "__main__":
@@ -184,8 +243,8 @@ if __name__ == "__main__":
     print(f"\n音符列表（共 {len(info['notes'])} 个）：")
     for i, note in enumerate(info["notes"]):
         print(
-            f"  音符{i + 1}：歌词={note['lyric']}，"
-            f"音高={note['note_num']}，"
-            f"时长={note['length']}，"
-            f"PitchBend={len(note['pitch_bend'])}点"
+            f"  音符{i + 1}：歌词={note.get('lyric', '')}，"
+            f"音高={note.get('note_num', 0)}，"
+            f"时长={note.get('length', 0)}，"
+            f"PitchBend={len(note.get('pitch_bend', []))}点"
         )

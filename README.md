@@ -4,7 +4,7 @@
 
 # ustPlayer
 
-中文的、面向多样音声合成编辑器工程文件的可视化工具。
+多语言的、面向多样音声合成编辑器工程文件的可视化工具。
 
 ![GitHub Release](https://img.shields.io/github/v/release/SYEternalR/ustPlayer?style=for-the-badge)
 ![GitHub All Releases](https://img.shields.io/github/downloads/SYEternalR/ustPlayer/total?style=for-the-badge)
@@ -15,12 +15,9 @@
 
 </div>
 
-> [!WARNING]
-> 
-> 我们将不再提供 .msi 安装包，也不再打算提供 .app 格式程序。
+## 鸣谢
 
-## 致谢
-### 资源
+### 使用的依赖库
 [PySide6](https://www.qt.io/)
 
 [PySide6-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PySide6)
@@ -45,4 +42,3 @@ ustPlayer版权由SYEternalR所有，授权给符合条件的任何用户免费�
 
 ---
 感谢使用，玩得开心！
-</div>

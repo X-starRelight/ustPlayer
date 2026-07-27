@@ -1,29 +1,29 @@
 # lyric_page.py — "歌词" 导航页
 """LRC 歌词文件导入与显示控制。"""
 
-from typing import Optional
+from __future__ import annotations
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog
 from PySide6.QtCore import Qt
 
-from qfluentwidgets import (
+from qfluentwidgets import (  # pyright: ignore[reportMissingTypeStubs]
     LineEdit, PushButton, CheckBox,
     BodyLabel, StrongBodyLabel, HorizontalSeparator,
 )
 
-from core.settings_manager import SettingsManager
+from ..core.settings_manager import SettingsManager
 
 
 class LyricPage(QWidget):
     """歌词标签页 — LRC 文件路径 + 显示开关。"""
 
-    def __init__(self, settings: SettingsManager, parent: Optional[QWidget] = None):
+    def __init__(self, settings: SettingsManager, parent: QWidget | None = None):
         super().__init__(parent)
         self._s = settings
         self._setup_ui()
         self._connect_signals()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(12)
@@ -50,17 +50,17 @@ class LyricPage(QWidget):
 
         layout.addStretch()
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         self.cb_show_lyric.setChecked(self._s.show_lyric)
         self.lrc_edit.setText(self._s.lrc_path)
 
         self.cb_show_lyric.checkStateChanged.connect(
-            lambda v: setattr(self._s, "show_lyric", v == Qt.Checked)
+            lambda v: setattr(self._s, "show_lyric", v == Qt.CheckState.Checked)
         )
         self.lrc_edit.textChanged.connect(lambda v: setattr(self._s, "lrc_path", v))
         self.select_btn.clicked.connect(self._on_select_lrc)
 
-    def _on_select_lrc(self):
+    def _on_select_lrc(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self, "选择LRC歌词文件",
             "",
@@ -69,7 +69,7 @@ class LyricPage(QWidget):
         if file_path:
             self.lrc_edit.setText(file_path)
 
-    def sync_all_from_settings(self):
+    def sync_all_from_settings(self) -> None:
         """导入 uplr 后同步 UI。"""
         self.cb_show_lyric.setChecked(self._s.show_lyric)
         self.lrc_edit.setText(self._s.lrc_path)

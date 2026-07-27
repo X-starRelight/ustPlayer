@@ -4,12 +4,16 @@
 通过 Qt Signal 通知 UI 所有配置变更，替代 tkinter 的 StringVar/BooleanVar 机制。
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import configparser
-from typing import Optional
+from typing import Any
 
 from PySide6.QtCore import QObject, Signal
+
+from .ustreader import UstInfo
 
 
 class SettingsManager(QObject):
@@ -58,7 +62,7 @@ class SettingsManager(QObject):
     accent_color_mode_changed = Signal(str)
     custom_accent_color_changed = Signal(str)
 
-    def __init__(self, parent: Optional[QObject] = None):
+    def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
 
         # 程序根目录
@@ -642,7 +646,7 @@ class SettingsManager(QObject):
 
     # ===================== 构建播放器需要的 ust_info 字典 =====================
 
-    def build_ust_info(self, core_ust_info: dict) -> dict:
+    def build_ust_info(self, core_ust_info: UstInfo) -> dict[str, Any]:
         """组装传递给播放器的完整参数 dict（兼容原 ustplayer.py 的接口）。"""
         silent_disp = self.silent_display if self.silent_display != "什么都不显示" else ""
         end_disp = self.end_display if self.end_display != "什么都不显示" else ""

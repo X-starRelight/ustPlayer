@@ -1,39 +1,41 @@
 # basic_page.py — "基础" 导航页
 """项目信息、显示选项和播放控制。"""
 
+from __future__ import annotations
+
+from collections.abc import Callable
 import os
-from typing import Optional
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFileDialog,
 )
 from PySide6.QtCore import Qt
 
-from qfluentwidgets import (
+from qfluentwidgets import (  # pyright: ignore[reportMissingTypeStubs]
     LineEdit, PushButton, PrimaryPushButton, SwitchButton,
     BodyLabel, StrongBodyLabel, HorizontalSeparator,
     InfoBar, InfoBarPosition,
 )
 
-from core.settings_manager import SettingsManager
+from ..core.settings_manager import SettingsManager
 
 
 class BasicPage(QWidget):
     """基础页 — 项目信息 + 显示选项 + Play。"""
 
-    def __init__(self, settings: SettingsManager, parent: Optional[QWidget] = None):
+    def __init__(self, settings: SettingsManager, parent: QWidget | None = None):
         super().__init__(parent)
         self._s = settings
-        self._play_callback: Optional[callable] = None
+        self._play_callback: Callable[..., None] | None = None
         self._setup_ui()
         self._connect_signals()
 
-    def set_play_callback(self, callback: callable):
+    def set_play_callback(self, callback: Callable[..., None]):
         self._play_callback = callback
 
     # ===================== UI 构建 =====================
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(8)
@@ -111,30 +113,30 @@ class BasicPage(QWidget):
 
     # ===================== 信号绑定 =====================
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         s = self._s
 
         # 初始值 → UI
-        self.edit_project_name.setText(s.project_name)
-        self.edit_song_name.setText(s.song_name)
-        self.edit_song_author.setText(s.song_author)
-        self.edit_ust_author.setText(s.ust_author)
-        self.sw_show_bpm.setChecked(s.show_bpm)
-        self.sw_show_play_time.setChecked(s.show_play_time)
-        self.sw_show_song_name.setChecked(s.show_song_name)
-        self.sw_show_song_author.setChecked(s.show_song_author)
-        self.sw_show_ust_author.setChecked(s.show_ust_author)
+        self.edit_project_name.setText(s.project_name)  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_song_name.setText(s.song_name)  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_song_author.setText(s.song_author)  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_ust_author.setText(s.ust_author)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_bpm.setChecked(s.show_bpm)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_play_time.setChecked(s.show_play_time)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_song_name.setChecked(s.show_song_name)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_song_author.setChecked(s.show_song_author)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_ust_author.setChecked(s.show_ust_author)  # pyright: ignore[reportAttributeAccessIssue]
 
         # UI → settings
-        self.edit_project_name.textChanged.connect(lambda v: setattr(s, "project_name", v))
-        self.edit_song_name.textChanged.connect(lambda v: setattr(s, "song_name", v))
-        self.edit_song_author.textChanged.connect(lambda v: setattr(s, "song_author", v))
-        self.edit_ust_author.textChanged.connect(lambda v: setattr(s, "ust_author", v))
-        self.sw_show_bpm.checkedChanged.connect(lambda v: setattr(s, "show_bpm", v))
-        self.sw_show_play_time.checkedChanged.connect(lambda v: setattr(s, "show_play_time", v))
-        self.sw_show_song_name.checkedChanged.connect(lambda v: setattr(s, "show_song_name", v))
-        self.sw_show_song_author.checkedChanged.connect(lambda v: setattr(s, "show_song_author", v))
-        self.sw_show_ust_author.checkedChanged.connect(lambda v: setattr(s, "show_ust_author", v))
+        self.edit_project_name.textChanged.connect(lambda v: setattr(s, "project_name", v))  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_song_name.textChanged.connect(lambda v: setattr(s, "song_name", v))  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_song_author.textChanged.connect(lambda v: setattr(s, "song_author", v))  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_ust_author.textChanged.connect(lambda v: setattr(s, "ust_author", v))  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_bpm.checkedChanged.connect(lambda v: setattr(s, "show_bpm", v))  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_play_time.checkedChanged.connect(lambda v: setattr(s, "show_play_time", v))  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_song_name.checkedChanged.connect(lambda v: setattr(s, "show_song_name", v))  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_song_author.checkedChanged.connect(lambda v: setattr(s, "show_song_author", v))  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_ust_author.checkedChanged.connect(lambda v: setattr(s, "show_ust_author", v))  # pyright: ignore[reportAttributeAccessIssue]
 
         # 按钮
         self.import_btn.clicked.connect(self._on_import)
@@ -143,7 +145,7 @@ class BasicPage(QWidget):
 
     # ===================== 业务逻辑 =====================
 
-    def _on_import(self):
+    def _on_import(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self, "打开工程文件", self._s.last_open_dir,
             "ustPlayer工程文件 (*.uplr);;所有文件 (*.*)",
@@ -155,13 +157,15 @@ class BasicPage(QWidget):
             self._sync_ui_from_settings()
             self._s.last_open_dir = os.path.dirname(file_path)
             self._s.write_settings()
-            InfoBar.success("成功", f"已加载工程：{file_path}", 3000,
-                            parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
+            InfoBar.success(  # pyright: ignore[reportUnknownMemberType]
+                "成功", f"已加载工程：{file_path}", 3000,
+                parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
         except Exception as e:
-            InfoBar.error("ERcode007", f"加载文件失败：{e}", 5000,
-                          parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
+                "ERcode007", f"加载文件失败：{e}", 5000,
+                parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
 
-    def _on_export(self):
+    def _on_export(self) -> None:
         file_path, _ = QFileDialog.getSaveFileName(
             self, "导出你的工程文件",
             os.path.join(self._s.last_export_dir, self._s.project_name or "未命名"),
@@ -173,27 +177,29 @@ class BasicPage(QWidget):
             self._s.export_uplr(file_path)
             self._s.last_export_dir = os.path.dirname(file_path)
             self._s.write_settings()
-            InfoBar.success("成功", f"工程已导出到：{file_path}", 3000,
-                            parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
+            InfoBar.success(  # pyright: ignore[reportUnknownMemberType]
+                "成功", f"工程已导出到：{file_path}", 3000,
+                parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
         except Exception as e:
-            InfoBar.error("ERcode006", f"导出失败：{e}", 5000,
-                          parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
+            InfoBar.error(  # pyright: ignore[reportUnknownMemberType]
+                "ERcode006", f"导出失败：{e}", 5000,
+                parent=self.window(), position=InfoBarPosition.TOP_RIGHT)
 
-    def _on_play(self):
+    def _on_play(self) -> None:
         if self._play_callback:
             self._play_callback()
 
-    def _sync_ui_from_settings(self):
+    def _sync_ui_from_settings(self) -> None:
         s = self._s
-        self.edit_project_name.setText(s.project_name)
-        self.edit_song_name.setText(s.song_name)
-        self.edit_song_author.setText(s.song_author)
-        self.edit_ust_author.setText(s.ust_author)
-        self.sw_show_bpm.setChecked(s.show_bpm)
-        self.sw_show_play_time.setChecked(s.show_play_time)
-        self.sw_show_song_name.setChecked(s.show_song_name)
-        self.sw_show_song_author.setChecked(s.show_song_author)
-        self.sw_show_ust_author.setChecked(s.show_ust_author)
+        self.edit_project_name.setText(s.project_name)  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_song_name.setText(s.song_name)  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_song_author.setText(s.song_author)  # pyright: ignore[reportAttributeAccessIssue]
+        self.edit_ust_author.setText(s.ust_author)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_bpm.setChecked(s.show_bpm)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_play_time.setChecked(s.show_play_time)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_song_name.setChecked(s.show_song_name)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_song_author.setChecked(s.show_song_author)  # pyright: ignore[reportAttributeAccessIssue]
+        self.sw_show_ust_author.setChecked(s.show_ust_author)  # pyright: ignore[reportAttributeAccessIssue]
 
-    def sync_all_from_settings(self):
+    def sync_all_from_settings(self) -> None:
         self._sync_ui_from_settings()
